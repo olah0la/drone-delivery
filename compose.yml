@@ -1,0 +1,41 @@
+services:
+  event-collector:
+    build: ./event_collector
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./event_collector:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=events
+    depends_on:
+      - redis
+      - postgres
+
+
+  deliveries:
+    build: ./deliveries
+    environment:
+      BASE_URL: http://event-collector:8000
+    volumes:
+      - ./deliveries:/app/deliveries
+    depends_on:
+      - event-collector
+    command: python generate_events.py http://event-collector:8000
+
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:latest
+
+networks:
+  default:
+    driver: bridge
