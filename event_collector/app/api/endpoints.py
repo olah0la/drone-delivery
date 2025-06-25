@@ -23,4 +23,4 @@ async def get_events(id: str):
 @router.get("/counts")
 async def total_ongoing_deliveries():
     print('Getting total ongoing deliveries')
-    return {"count": 0}
+    return {"ongoing_deliveries": 0, "total_deliveries": 0}
