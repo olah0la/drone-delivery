@@ -1,13 +1,7 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
 
-class Event(BaseModel):
-    type: str
+from app.api import router
 
-app = FastAPI()
+app = FastAPI(title="Event Collector API")
 
-
-@app.post("/deliveries/{id}/events")
-async def root(id: str, event: Event):
-    print(f'Delivery {id} transitioned to {event.type}')
-    return {"message": "ok"}
+app.include_router(router)
