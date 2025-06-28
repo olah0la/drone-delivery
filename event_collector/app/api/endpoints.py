@@ -1,26 +1,32 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..schemas import EventSchema
-from ..services import ingest_event
+from ..services import ingest_event, count_deliveries, get_delivery_events, get_ongoing_deliveries
+from ..db.database import get_db
+
 
 router = APIRouter()
 
 @router.get("/deliveries")
-async def get_ongoing_deliveries():
-    print('Getting ongoing deliveries')
-    return {"deliveries": []}
+async def ongoing_deliveries(db: AsyncSession = Depends(get_db)):
+    ongoing_deliveries = await get_ongoing_deliveries(db)
+    return ongoing_deliveries
 
 @router.post("/deliveries/{id}/events")
-async def create_event(id: str, event: EventSchema):
-    print(f'Delivery {id} transitioned to {event.type}')
-    return ingest_event(id, event)
+async def create_event(id: str, event: EventSchema, db: AsyncSession = Depends(get_db)):
+    ingested_events = await ingest_event(db, id, event)
+    return ingested_events
 
 @router.get("/deliveries/{id}/events")
-async def get_events(id: str):
-    print(f'Getting events for delivery {id}')
-    return {"events": []}
+async def get_events(id: str, db: AsyncSession = Depends(get_db)):
+    delivery_events = await get_delivery_events(db, id)
+    if not delivery_events:
+        return {"message": "No events found for this delivery."}
+    return delivery_events
 
 @router.get("/counts")
-async def total_ongoing_deliveries():
-    print('Getting total ongoing deliveries')
-    return {"ongoing_deliveries": 0, "total_deliveries": 0}
+async def total_ongoing_deliveries(db: AsyncSession = Depends(get_db)):
+    """Get the total number of ongoing deliveries and total deliveries since the beginning."""
+    total_ongoing_deliveries = await count_deliveries(db)
+    return total_ongoing_deliveries

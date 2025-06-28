@@ -5,14 +5,17 @@ services:
       - "8000:8000"
     volumes:
       - ./event_collector:/app
+    env_file:
+      - .env
     environment:
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
-      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:{POSTGRES_PORT}/${POSTGRES_DB}
+      - DELIVERY_HISTORY_LIMIT=${DELIVERY_HISTORY_LIMIT}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:${POSTGRES_PORT}/${POSTGRES_DB}
+      - PYTHONPATH=/app
     depends_on:
       - redis
       - postgres
-
 
   deliveries:
     build: ./deliveries
@@ -28,7 +31,7 @@ services:
   redis:
     image: redis:${REDIS_VERSION}
     ports:
-      - "6379:6379"
+      - "$REDIS_PORT:6379"
 
   postgres:
     image: postgres:${POSTGRES_VERSION}

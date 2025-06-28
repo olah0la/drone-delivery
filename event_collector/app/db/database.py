@@ -1,23 +1,15 @@
-import os
-
-from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Get database URL from environment variable
-DATABASE_URL = os.getenv("DATABASE_URL")
+from ..core import settings
 
-if not DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable is not set.")
+engine = create_async_engine(settings.db_url, echo=settings.debug)
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+AsyncSessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
 Base = declarative_base()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+async def get_db() -> AsyncSession:
+    async with AsyncSessionLocal() as session:
+       yield session
