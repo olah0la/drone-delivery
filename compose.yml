@@ -52,6 +52,29 @@ services:
       retries: 5
     restart: always
 
+  test-db:
+    image: postgres:15
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: test_db
+
+  test:
+    build: ./event_collector
+    command: sh -c "echo $DATABASE_URL && pytest"
+    volumes:
+      - ./event_collector:/app
+    env_file:
+      - .env
+    environment:
+      PYTHONPATH: /app
+      DATABASE_URL: postgresql+asyncpg://test:test@test-db:5432/test_db
+    depends_on:
+      - test-db
+    
+
 volumes:
   postgres_data:
 

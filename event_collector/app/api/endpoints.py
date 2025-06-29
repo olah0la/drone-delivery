@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..schemas import EventSchema
@@ -23,7 +23,7 @@ async def create_event(id: str, event: EventSchema, db: AsyncSession = Depends(g
 async def get_events(id: str, db: AsyncSession = Depends(get_db)):
     delivery_events = await get_delivery_events(db, id)
     if not delivery_events:
-        return {"message": "No events found for this delivery."}
+        raise HTTPException(status_code=404, detail="No events found for this delivery.")
     return delivery_events
 
 @router.get("/counts")
