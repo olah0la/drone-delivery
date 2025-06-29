@@ -1,6 +1,6 @@
 import enum
 
-class State(enum.Enum):
+class DeliveryState(enum.Enum):
     PARCEL_COLLECTED = "PARCEL_COLLECTED"
     TAKEN_OFF = "TAKEN_OFF"
     LANDED = "LANDED"

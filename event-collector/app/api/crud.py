@@ -4,11 +4,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy import func
 
-from ..models import Delivery, Event, State
+from ..models import Delivery, Event, DeliveryState
 from ..core import settings
 
 
-async def create_delivery(db: AsyncSession, delivery_name: str, event_type: State) -> Delivery:
+async def create_delivery(db: AsyncSession, delivery_name: str, event_type: DeliveryState) -> Delivery:
     """Create a new delivery and handle the event."""
     delivery = Delivery(name=delivery_name, status=event_type)
     db.add(delivery)
@@ -21,7 +21,7 @@ async def get_deliveries(db: AsyncSession) -> List[Delivery]:
     deliveries = await db.query(Delivery).all()
     return deliveries
 
-async def get_deliveries_by_state(db: AsyncSession, states: List[State]) -> List[Delivery]:
+async def get_deliveries_by_state(db: AsyncSession, states: List[DeliveryState]) -> List[Delivery]:
     """Retrieve deliveries filtered by their status."""
     query = select(Delivery).where(Delivery.status.in_(states))
     result = await db.execute(query)
@@ -35,7 +35,7 @@ async def read_delivery(db: AsyncSession, delivery_name: str) -> Delivery:
     delivery = result.scalars().first()
     return delivery
 
-async def update_delivery(db: AsyncSession, delivery_name: str, event_type: State = State.PARCEL_COLLECTED) -> Delivery:
+async def update_delivery(db: AsyncSession, delivery_name: str, event_type: DeliveryState = DeliveryState.PARCEL_COLLECTED) -> Delivery:
     """Update the status of an existing delivery."""
     query = select(Delivery).where(Delivery.name == delivery_name)
     result = await db.execute(query)
@@ -55,7 +55,7 @@ async def delete_delivery(db: AsyncSession, delivery_name: str) -> None:
     await db.delete(delivery)
     await db.commit()
 
-async def count_deliveries_by_state(db: AsyncSession, states: List[State]) -> int:
+async def count_deliveries_by_state(db: AsyncSession, states: List[DeliveryState]) -> int:
     """Count the total number of ongoing and total deliveries."""
     query = select(func.count(Delivery.id)).where(Delivery.status.in_(states))
     result = await db.execute(query)
@@ -69,7 +69,7 @@ async def count_total_deliveries(db: AsyncSession) -> int:
     count = result.scalar_one() 
     return count
 
-async def handle_new_delivery(db: AsyncSession, delivery_name: str, event_type: State) -> Delivery:
+async def handle_new_delivery(db: AsyncSession, delivery_name: str, event_type: DeliveryState) -> Delivery:
     """Handle a new delivery by creating it and ensuring the delivery history limit is respected."""
     total_deliveries = await count_total_deliveries(db)
     if total_deliveries >= settings.delivery_history_limit:
@@ -83,7 +83,7 @@ async def handle_new_delivery(db: AsyncSession, delivery_name: str, event_type: 
     db.add(delivery)
     return delivery
 
-async def create_event(db: AsyncSession, delivery_name: str, event_type: State) -> Event:
+async def create_event(db: AsyncSession, delivery_name: str, event_type: DeliveryState) -> Event:
     """Create a new event for a delivery."""
     delivery = await read_delivery(db, delivery_name)
     event = Event(delivery_id=delivery.id, type=event_type)
@@ -97,7 +97,7 @@ async def read_event(db: AsyncSession, event_id: int) -> Event:
         raise ValueError(f"Event with ID {event_id} does not exist.")
     return event
 
-async def update_event(db: AsyncSession, event_id: int, event_type: State) -> Event:
+async def update_event(db: AsyncSession, event_id: int, event_type: DeliveryState) -> Event:
     """Update the type of an existing event."""
     event = await db.query(Event).filter(Event.id == event_id).first()
     if not event:

@@ -4,7 +4,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./event_collector:/app
+      - ./event-collector:/app
     env_file:
       - .env
     environment:
@@ -65,7 +65,7 @@ services:
     build: ./event_collector
     command: sh -c "echo $DATABASE_URL && pytest"
     volumes:
-      - ./event_collector:/app
+      - ./event-collector:/app
     env_file:
       - .env
     environment:

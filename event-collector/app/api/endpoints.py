@@ -1,3 +1,5 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,15 +11,18 @@ from ..db.database import get_db
 router = APIRouter()
 
 @router.get("/deliveries")
-async def ongoing_deliveries(db: AsyncSession = Depends(get_db)):
-    ongoing_deliveries = await get_ongoing_deliveries(db)
-    return ongoing_deliveries
+async def ongoing_deliveries(db: AsyncSession = Depends(get_db)) -> List[dict]:
+    deliveries = await get_ongoing_deliveries(db)
+    return deliveries
 
 @router.post("/deliveries/{id}/events")
 async def create_event(id: str, event: EventSchema, db: AsyncSession = Depends(get_db)):
-    async with db.begin():
-        ingested_events = await ingest_event(db, id, event)
-        return ingested_events
+    try:
+        async with db.begin():
+            ingested_event = await ingest_event(db, id, event)
+            return ingested_event
+    except HTTPException as e:
+        raise e
 
 @router.get("/deliveries/{id}/events")
 async def get_events(id: str, db: AsyncSession = Depends(get_db)):
@@ -29,5 +34,5 @@ async def get_events(id: str, db: AsyncSession = Depends(get_db)):
 @router.get("/counts")
 async def total_ongoing_deliveries(db: AsyncSession = Depends(get_db)):
     """Get the total number of ongoing deliveries and total deliveries since the beginning."""
-    total_ongoing_deliveries = await count_deliveries(db)
-    return total_ongoing_deliveries
+    ongoing_delivery_count = await count_deliveries(db)
+    return ongoing_delivery_count
