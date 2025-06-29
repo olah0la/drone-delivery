@@ -88,6 +88,8 @@ async def create_event(db: AsyncSession, delivery_name: str, event_type: Deliver
     delivery = await read_delivery(db, delivery_name)
     event = Event(delivery_id=delivery.id, type=event_type)
     db.add(event)
+    await db.flush()  # Persist the event to the database
+    await db.refresh(event)  # Refresh the event to populate fields like id and created_at
     return event
 
 async def read_event(db: AsyncSession, event_id: int) -> Event:

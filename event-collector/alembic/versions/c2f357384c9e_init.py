@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 6c9d0aa160a1
+Revision ID: c2f357384c9e
 Revises: 
-Create Date: 2025-06-29 20:49:57.546523
+Create Date: 2025-06-29 21:33:44.533578
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6c9d0aa160a1'
+revision: str = 'c2f357384c9e'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,14 +24,14 @@ def upgrade() -> None:
     op.create_table('deliveries',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
-    sa.Column('status', sa.Enum('PARCEL_COLLECTED', 'TAKEN_OFF', 'LANDED', 'CRASHED', 'PARCEL_DELIVERED', name='state'), nullable=False),
+    sa.Column('status', sa.Enum('PARCEL_COLLECTED', 'TAKEN_OFF', 'LANDED', 'CRASHED', 'PARCEL_DELIVERED', name='deliverystate'), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_deliveries_id'), 'deliveries', ['id'], unique=False)
     op.create_table('events',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('type', sa.Enum('PARCEL_COLLECTED', 'TAKEN_OFF', 'LANDED', 'CRASHED', 'PARCEL_DELIVERED', name='state'), nullable=False),
+    sa.Column('type', sa.Enum('PARCEL_COLLECTED', 'TAKEN_OFF', 'LANDED', 'CRASHED', 'PARCEL_DELIVERED', name='deliverystate'), nullable=False),
     sa.Column('delivery_id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.ForeignKeyConstraint(['delivery_id'], ['deliveries.id'], ),

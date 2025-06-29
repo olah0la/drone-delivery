@@ -1,5 +1,8 @@
+from typing import List
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..schemas import DeliverySchema, DeliveryCountSchema
 from ..models import Delivery, DeliveryState
 from ..api.crud import (
     count_deliveries_by_state,
@@ -10,17 +13,20 @@ from ..api.crud import (
     get_deliveries_by_state
 )
 
-async def count_deliveries(db: AsyncSession) -> dict:
-    """Count the total number of ongoing and total deliveries."""
-    ONGOING_STATES = (DeliveryState.TAKEN_OFF, DeliveryState.PARCEL_COLLECTED, DeliveryState.LANDED)
-    return {
-        "ongoing_deliveries": await count_deliveries_by_state(db, ONGOING_STATES),
-        "total_deliveries": await count_total_deliveries(db)
-    }
 
-async def get_ongoing_deliveries(db: AsyncSession) -> list:
+ONGOING_STATES = (DeliveryState.TAKEN_OFF, DeliveryState.PARCEL_COLLECTED, DeliveryState.LANDED)
+
+async def count_deliveries(db: AsyncSession) -> DeliveryCountSchema:
+    """Count the total number of ongoing and total deliveries."""
+    ongoing_deliveries = await count_deliveries_by_state(db, ONGOING_STATES)
+    total_deliveries = await count_total_deliveries(db)
+    return DeliveryCountSchema(
+        ongoing_deliveries=ongoing_deliveries,
+        total_deliveries=total_deliveries
+    )
+
+async def get_ongoing_deliveries(db: AsyncSession) -> List[DeliverySchema]:
     """Retrieve all ongoing deliveries."""
-    ONGOING_STATES = (DeliveryState.TAKEN_OFF, DeliveryState.PARCEL_COLLECTED, DeliveryState.LANDED)
     deliveries = await get_deliveries_by_state(db, ONGOING_STATES)
     if not deliveries:
         return []
