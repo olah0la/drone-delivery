@@ -5,6 +5,7 @@ from sqlalchemy.future import select
 from sqlalchemy import func
 
 from ..models import Delivery, Event, State
+from ..core import settings
 
 
 async def create_delivery(db: AsyncSession, delivery_name: str, event_type: State) -> Delivery:
@@ -42,8 +43,6 @@ async def update_delivery(db: AsyncSession, delivery_name: str, event_type: Stat
     if not delivery:
         raise ValueError(f"Delivery with name {delivery_name} does not exist.")
     delivery.status = event_type
-    await db.commit()
-    await db.refresh(delivery)
     return delivery
 
 async def delete_delivery(db: AsyncSession, delivery_name: str) -> None:
@@ -70,13 +69,25 @@ async def count_total_deliveries(db: AsyncSession) -> int:
     count = result.scalar_one() 
     return count
 
+async def handle_new_delivery(db: AsyncSession, delivery_name: str, event_type: State) -> Delivery:
+    """Handle a new delivery by creating it and ensuring the delivery history limit is respected."""
+    total_deliveries = await count_total_deliveries(db)
+    if total_deliveries >= settings.delivery_history_limit:
+        print(f"Delivery history limit reached: {settings.delivery_history_limit}. Deleting oldest delivery.")
+        oldest_delivery_query = select(Delivery).order_by(Delivery.created_at)
+        result = await db.execute(oldest_delivery_query)
+        oldest_delivery = result.scalars().first()
+        if oldest_delivery:
+            await db.delete(oldest_delivery)
+    delivery = Delivery(name=delivery_name, status=event_type)
+    db.add(delivery)
+    return delivery
+
 async def create_event(db: AsyncSession, delivery_name: str, event_type: State) -> Event:
     """Create a new event for a delivery."""
     delivery = await read_delivery(db, delivery_name)
     event = Event(delivery_id=delivery.id, type=event_type)
     db.add(event)
-    await db.commit()
-    await db.refresh(event)
     return event
 
 async def read_event(db: AsyncSession, event_id: int) -> Event:

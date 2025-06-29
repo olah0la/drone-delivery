@@ -15,8 +15,9 @@ async def ongoing_deliveries(db: AsyncSession = Depends(get_db)):
 
 @router.post("/deliveries/{id}/events")
 async def create_event(id: str, event: EventSchema, db: AsyncSession = Depends(get_db)):
-    ingested_events = await ingest_event(db, id, event)
-    return ingested_events
+    async with db.begin():
+        ingested_events = await ingest_event(db, id, event)
+        return ingested_events
 
 @router.get("/deliveries/{id}/events")
 async def get_events(id: str, db: AsyncSession = Depends(get_db)):

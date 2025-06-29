@@ -2,7 +2,7 @@
 
 
 ```bash
-docker-compose run --rm web alembic revision --autogenerate 
+docker compose run --rm event-collector alembic revision --autogenerate -m "init" 
 ```
 
 
