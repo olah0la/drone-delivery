@@ -1,2 +1,2 @@
-from .event_schemas import EventSchema, EventOutputSchema
+from .event_schemas import EventSchema, EventOutputSchema, EventType
 from .delivery_schemas import DeliverySchema, DeliveryCountSchema
