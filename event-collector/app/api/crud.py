@@ -18,7 +18,8 @@ async def create_delivery(db: AsyncSession, delivery_name: str, event_type: Deli
 
 async def get_deliveries(db: AsyncSession) -> List[Delivery]:
     """Retrieve all deliveries from the database."""
-    deliveries = await db.query(Delivery).all()
+    result = await db.execute(select(Delivery))
+    deliveries = result.scalars().all()
     return deliveries
 
 async def get_deliveries_by_state(db: AsyncSession, states: List[DeliveryState]) -> List[Delivery]:
@@ -28,7 +29,7 @@ async def get_deliveries_by_state(db: AsyncSession, states: List[DeliveryState])
     deliveries = result.scalars().all()
     return deliveries
 
-async def read_delivery(db: AsyncSession, delivery_name: str) -> Delivery:
+async def read_delivery_by_name(db: AsyncSession, delivery_name: str) -> Delivery:
     """Retrieve a delivery by its name."""
     query = select(Delivery).where(Delivery.name == delivery_name)
     result = await db.execute(query)
@@ -81,11 +82,11 @@ async def handle_new_delivery(db: AsyncSession, delivery_name: str, event_type: 
             await db.delete(oldest_delivery)
     delivery = Delivery(name=delivery_name, status=event_type)
     db.add(delivery)
-    return delivery
+    return delivery # Note: The delivery is not committed here, it is done in the endpoint handler.
 
 async def create_event(db: AsyncSession, delivery_name: str, event_type: DeliveryState) -> Event:
     """Create a new event for a delivery."""
-    delivery = await read_delivery(db, delivery_name)
+    delivery = await read_delivery_by_name(db, delivery_name)
     event = Event(delivery_id=delivery.id, type=event_type)
     db.add(event)
     await db.flush()  # Persist the event to the database
