@@ -87,6 +87,8 @@ async def handle_new_delivery(db: AsyncSession, delivery_name: str, event_type: 
 async def create_event(db: AsyncSession, delivery_name: str, event_type: DeliveryState) -> Event:
     """Create a new event for a delivery."""
     delivery = await read_delivery_by_name(db, delivery_name)
+    if not delivery:
+        raise ValueError(f"Delivery with name {delivery_name} does not exist.")
     event = Event(delivery_id=delivery.id, type=event_type)
     db.add(event)
     await db.flush()  # Persist the event to the database
