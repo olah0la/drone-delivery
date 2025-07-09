@@ -10,19 +10,12 @@ class Event(Base):
     __tablename__ = 'events'
 
     id: int = Column(Integer, primary_key=True, index=True)
-    type: str = Column(Enum(DeliveryState), nullable=False)
-    delivery_id: int = Column(Integer, ForeignKey('deliveries.id'), nullable=False)
-    created_at: datetime = Column(DateTime, server_default=func.now())
+    type: DeliveryState = Column(Enum(DeliveryState), nullable=False)
+    delivery_id: int = Column(Integer, ForeignKey('deliveries.id'), nullable=False) # ondelete cascade ?
+    created_at: datetime = Column(DateTime, server_default=func.now(), nullable=False)
     
     delivery = relationship("Delivery", back_populates="events")
+
+    def __repr__(self):
+        return f"<Event(id={self.id}, type={self.type}, delivery_id={self.delivery_id}, created_at={self.created_at})>"
     
-    def to_dict(self):
-        """
-        Convert the Event instance to a dictionary.
-        """
-        return {
-            "id": self.id,
-            "type": self.type,
-            "delivery_id": self.delivery_id,
-            "created_at": self.created_at.isoformat() if self.created_at else None
-        }
